@@ -10,6 +10,7 @@ import {
 } from "vscode-languageserver-protocol"
 import {
 	toVsCodePosition,
+	toVsCodeRange,
 	toVsCodeSymbolKind,
 	toVsCodeUri,
 } from "../utils/converters"
@@ -51,26 +52,8 @@ export function registerHierarchyHandlers(connection: ProtocolConnection) {
 				params.item.name,
 				params.item.detail || "",
 				uri,
-				new vscode.Range(
-					new vscode.Position(
-						params.item.range.start.line,
-						params.item.range.start.character,
-					),
-					new vscode.Position(
-						params.item.range.end.line,
-						params.item.range.end.character,
-					),
-				),
-				new vscode.Range(
-					new vscode.Position(
-						params.item.selectionRange.start.line,
-						params.item.selectionRange.start.character,
-					),
-					new vscode.Position(
-						params.item.selectionRange.end.line,
-						params.item.selectionRange.end.character,
-					),
-				),
+				toVsCodeRange(params.item.range),
+				toVsCodeRange(params.item.selectionRange),
 			)
 
 			const calls = await vscode.commands.executeCommand<
@@ -94,26 +77,8 @@ export function registerHierarchyHandlers(connection: ProtocolConnection) {
 				params.item.name,
 				params.item.detail || "",
 				uri,
-				new vscode.Range(
-					new vscode.Position(
-						params.item.range.start.line,
-						params.item.range.start.character,
-					),
-					new vscode.Position(
-						params.item.range.end.line,
-						params.item.range.end.character,
-					),
-				),
-				new vscode.Range(
-					new vscode.Position(
-						params.item.selectionRange.start.line,
-						params.item.selectionRange.start.character,
-					),
-					new vscode.Position(
-						params.item.selectionRange.end.line,
-						params.item.selectionRange.end.character,
-					),
-				),
+				toVsCodeRange(params.item.range),
+				toVsCodeRange(params.item.selectionRange),
 			)
 
 			const calls = await vscode.commands.executeCommand<
@@ -154,26 +119,8 @@ export function registerHierarchyHandlers(connection: ProtocolConnection) {
 				params.item.name,
 				params.item.detail || "",
 				uri,
-				new vscode.Range(
-					new vscode.Position(
-						params.item.range.start.line,
-						params.item.range.start.character,
-					),
-					new vscode.Position(
-						params.item.range.end.line,
-						params.item.range.end.character,
-					),
-				),
-				new vscode.Range(
-					new vscode.Position(
-						params.item.selectionRange.start.line,
-						params.item.selectionRange.start.character,
-					),
-					new vscode.Position(
-						params.item.selectionRange.end.line,
-						params.item.selectionRange.end.character,
-					),
-				),
+				toVsCodeRange(params.item.range),
+				toVsCodeRange(params.item.selectionRange),
 			)
 
 			const items = await vscode.commands.executeCommand<
@@ -197,26 +144,8 @@ export function registerHierarchyHandlers(connection: ProtocolConnection) {
 				params.item.name,
 				params.item.detail || "",
 				uri,
-				new vscode.Range(
-					new vscode.Position(
-						params.item.range.start.line,
-						params.item.range.start.character,
-					),
-					new vscode.Position(
-						params.item.range.end.line,
-						params.item.range.end.character,
-					),
-				),
-				new vscode.Range(
-					new vscode.Position(
-						params.item.selectionRange.start.line,
-						params.item.selectionRange.start.character,
-					),
-					new vscode.Position(
-						params.item.selectionRange.end.line,
-						params.item.selectionRange.end.character,
-					),
-				),
+				toVsCodeRange(params.item.range),
+				toVsCodeRange(params.item.selectionRange),
 			)
 
 			const items = await vscode.commands.executeCommand<

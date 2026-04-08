@@ -5,7 +5,6 @@ import {
 	DocumentFormattingRequest,
 	DocumentOnTypeFormattingRequest,
 	DocumentRangeFormattingRequest,
-	PrepareRenameRequest,
 	RenameRequest,
 } from "vscode-languageserver-protocol"
 import {
@@ -36,17 +35,6 @@ export function registerCodeModificationHandlers(
 		}
 
 		return toLspWorkspaceEdit(edit)
-	})
-
-	connection.onRequest(PrepareRenameRequest.type, async (params, _token) => {
-		const _uri = toVsCodeUri(params.textDocument.uri)
-		const _pos = toVsCodePosition(params.position)
-		// VS Code does not have a direct command for prepare rename.
-		// However, returning null indicates to the client that we can't do it,
-		// or we can just return a valid range if we can find the word at position.
-		// For simplicity and correctness without a direct API, returning null falls back
-		// to the client's default behavior (usually renaming the word under cursor).
-		return null
 	})
 
 	connection.onRequest(CodeActionRequest.type, async (params, token) => {

@@ -33,7 +33,7 @@ export function registerLifecycleHandlers(connection: ProtocolConnection) {
 					documentSymbolProvider: true,
 					workspaceSymbolProvider: true,
 					codeActionProvider: true,
-					renameProvider: { prepareProvider: true },
+					renameProvider: true,
 					documentFormattingProvider: true,
 					documentRangeFormattingProvider: true,
 					documentOnTypeFormattingProvider: { firstTriggerCharacter: ";" },

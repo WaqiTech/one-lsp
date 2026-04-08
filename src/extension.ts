@@ -22,16 +22,13 @@ function generateSocketPath(): string {
 	return path.join(os.tmpdir(), `one-lsp-${id}.sock`)
 }
 
-const socketPath = generateSocketPath()
-
 export function activate(context: vscode.ExtensionContext) {
 	console.log("Activating one-lsp unified proxy...")
+	const socketPath = generateSocketPath()
 
 	const outputChannel = vscode.window.createOutputChannel("one-lsp")
 	context.subscriptions.push(outputChannel)
-	outputChannel.appendLine(
-		`one-lsp generated socket path: ${socketPath}`,
-	)
+	outputChannel.appendLine(`one-lsp generated socket path: ${socketPath}`)
 
 	// Write socket path to workspace for automatic discovery by bridge.js
 	const workspaceFolders = vscode.workspace.workspaceFolders
@@ -82,6 +79,21 @@ export function activate(context: vscode.ExtensionContext) {
 	})
 
 	server.listen(socketPath, () => {
+		if (os.platform() !== "win32") {
+			try {
+				fs.chmodSync(socketPath, 0o600)
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error)
+				outputChannel.appendLine(
+					`Failed to set socket permissions to 0600 at ${socketPath}: ${message}`,
+				)
+				console.error(
+					`Failed to set socket permissions to 0600 at ${socketPath}: ${message}`,
+				)
+				server.close()
+				return
+			}
+		}
 		console.log(`one-lsp unified proxy listening on ${socketPath}`)
 	})
 

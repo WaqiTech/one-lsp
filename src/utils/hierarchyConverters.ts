@@ -1,11 +1,35 @@
-import type * as vscode from "vscode"
+import * as vscode from "vscode"
 import type {
 	CallHierarchyIncomingCall,
 	CallHierarchyItem,
 	CallHierarchyOutgoingCall,
 	TypeHierarchyItem,
 } from "vscode-languageserver-protocol"
+import { SymbolTag } from "vscode-languageserver-protocol"
 import { toLspRange, toLspSymbolKind } from "./converters"
+
+function toLspSymbolTag(tag: vscode.SymbolTag): SymbolTag | undefined {
+	switch (tag) {
+		case vscode.SymbolTag.Deprecated:
+			return SymbolTag.Deprecated
+		default:
+			return undefined
+	}
+}
+
+function toLspSymbolTags(
+	tags: readonly vscode.SymbolTag[] | undefined,
+): SymbolTag[] | undefined {
+	if (!tags || tags.length === 0) {
+		return undefined
+	}
+
+	const converted = tags
+		.map(toLspSymbolTag)
+		.filter((tag): tag is SymbolTag => tag !== undefined)
+
+	return converted.length > 0 ? converted : undefined
+}
 
 export function toLspCallHierarchyItem(
 	item: vscode.CallHierarchyItem,
@@ -13,7 +37,7 @@ export function toLspCallHierarchyItem(
 	return {
 		name: item.name,
 		kind: toLspSymbolKind(item.kind),
-		tags: item.tags?.map((tag) => tag as 1),
+		tags: toLspSymbolTags(item.tags),
 		detail: item.detail,
 		uri: item.uri.toString(),
 		range: toLspRange(item.range),
@@ -46,7 +70,7 @@ export function toLspTypeHierarchyItem(
 	return {
 		name: item.name,
 		kind: toLspSymbolKind(item.kind),
-		tags: item.tags?.map((tag) => tag as 1),
+		tags: toLspSymbolTags(item.tags),
 		detail: item.detail,
 		uri: item.uri.toString(),
 		range: toLspRange(item.range),

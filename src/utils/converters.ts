@@ -344,9 +344,15 @@ export function toLspTextEdit(edit: vscode.TextEdit): TextEdit {
 
 export function toLspWorkspaceEdit(edit: vscode.WorkspaceEdit): WorkspaceEdit {
 	const changes: { [uri: string]: TextEdit[] } = {}
+
+	// Note: VS Code's public API for WorkspaceEdit (`entries()`) only exposes TextEdits.
+	// Any file operations (CreateFile, RenameFile, DeleteFile) embedded in the edit are hidden.
+	// Since accessing internal/undocumented properties (like `_allEntries()`) breaks type safety
+	// and stability, we intentionally only support text changes here.
 	for (const [uri, textEdits] of edit.entries()) {
 		changes[uri.toString()] = textEdits.map(toLspTextEdit)
 	}
+
 	return { changes }
 }
 

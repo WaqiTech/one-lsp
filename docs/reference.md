@@ -137,7 +137,7 @@ connection.onRequest(InitializeRequest.type, (params: InitializeParams): Initial
             documentSymbolProvider: true,  
             workspaceSymbolProvider: true,  
             codeActionProvider: true,  
-            renameProvider: { prepareProvider: true },  
+            renameProvider: true,  
             documentFormattingProvider: true  
         }  
     };  
@@ -243,7 +243,12 @@ function toLspCompletionItemKind(vsKind: vscode.CompletionItemKind): lsp.Complet
 ### **Problem 3: 0-Indexed vs. 1-Indexed Discrepancies**
 
 * **Positions:** Both LSP and VS Code use 0-indexed lines and characters. No arithmetic translation is needed for standard UTF-8 characters.  
-* **UTF-16 Surrogate Pairs:** VS Code API string lengths and characters map to UTF-16 code units (like JS strings). The LSP spec defaults to UTF-16 but allows negotiating UTF-8. **Solution:** Ensure your proxy strictly negotiates `positionEncoding: 'utf-16'` during the `initialize` handshake so no complex offset arithmetic is required.
+	* **UTF-16 Surrogate Pairs:** VS Code API string lengths and characters map to UTF-16 code units (like JS strings). The LSP spec defaults to UTF-16 but allows negotiating UTF-8. **Solution:** Ensure your proxy strictly negotiates `positionEncoding: 'utf-16'` during the `initialize` handshake so no complex offset arithmetic is required.
+
+### **Problem 4: File Operations in WorkspaceEdit**
+
+* **Issue:** When a VS Code extension returns a `WorkspaceEdit` (e.g., for a rename or code action), that edit might contain file creations, renames, or deletions in addition to text edits. However, VS Code's public extension API only exposes text edits via the `edit.entries()` method and completely hides these file operations.
+* **Solution/Limitation:** Because there is no stable public API to extract `CreateFile`, `RenameFile`, or `DeleteFile` operations from a `vscode.WorkspaceEdit` without resorting to undocumented internal properties (like `_allEntries()`), `one-lsp` intentionally limits support to text modifications. Any file operations included in an edit are currently dropped to ensure the proxy's long-term stability and type safety.
 
 ## **6. Diagnostic Streaming (Push Notifications)**
 
