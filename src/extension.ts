@@ -17,20 +17,20 @@ import { registerNotificationHandlers } from "./handlers/notifications"
 function generateSocketPath(): string {
 	const id = crypto.randomBytes(16).toString("hex")
 	if (os.platform() === "win32") {
-		return `\\\\.\\pipe\\unified-lsp-${id}`
+		return `\\\\.\\pipe\\one-lsp-${id}`
 	}
-	return path.join(os.tmpdir(), `unified-lsp-${id}.sock`)
+	return path.join(os.tmpdir(), `one-lsp-${id}.sock`)
 }
 
 const socketPath = generateSocketPath()
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log("Activating unified-lsp proxy...")
+	console.log("Activating one-lsp unified proxy...")
 
-	const outputChannel = vscode.window.createOutputChannel("Unified LSP")
+	const outputChannel = vscode.window.createOutputChannel("one-lsp")
 	context.subscriptions.push(outputChannel)
 	outputChannel.appendLine(
-		`Unified LSP Proxy generated socket path: ${socketPath}`,
+		`one-lsp generated socket path: ${socketPath}`,
 	)
 
 	// Write socket path to workspace for automatic discovery by bridge.js
@@ -43,12 +43,12 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!fs.existsSync(dotVscode)) {
 			fs.mkdirSync(dotVscode, { recursive: true })
 		}
-		sockInfoPath = path.join(dotVscode, "unified-lsp.sockpath")
+		sockInfoPath = path.join(dotVscode, "one-lsp.sockpath")
 		fs.writeFileSync(sockInfoPath, socketPath, "utf8")
 		outputChannel.appendLine(`Wrote socket path to workspace: ${sockInfoPath}`)
 
 		if (os.platform() !== "win32") {
-			executablePath = path.join(workspaceRoot, "unified-lsp")
+			executablePath = path.join(workspaceRoot, "one-lsp")
 			const scriptContent = `#!/bin/sh\nexec nc -U "${socketPath}"\n`
 			fs.writeFileSync(executablePath, scriptContent, { mode: 0o755 })
 			outputChannel.appendLine(
@@ -82,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 	})
 
 	server.listen(socketPath, () => {
-		console.log(`Unified LSP Proxy listening on ${socketPath}`)
+		console.log(`one-lsp unified proxy listening on ${socketPath}`)
 	})
 
 	context.subscriptions.push({

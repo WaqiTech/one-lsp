@@ -6,4 +6,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+- Normalize naming to `one-lsp` across docs and runtime labels.
 - Initial release

@@ -1,7 +1,7 @@
 {
 	"name": "one-lsp",
 	"displayName": "one-lsp",
-	"description": "",
+	"description": "one-lsp is a unified LSP proxy for connecting external editors to VS Code language features.",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.110.0"

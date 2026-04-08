@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const net = require('net');
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,16 +10,16 @@ function findSocket() {
     if (arg) return arg.split('=')[1];
 
     // 2. Check environment variable
-    if (process.env.UNIFIED_LSP_SOCKET) {
-        return process.env.UNIFIED_LSP_SOCKET;
+    if (process.env.ONE_LSP_SOCKET) {
+        return process.env.ONE_LSP_SOCKET;
     }
 
-    // 3. Walk up the directory tree to find .vscode/unified-lsp.sockpath
+    // 3. Walk up the directory tree to find .vscode/one-lsp.sockpath
     let currentDir = process.cwd();
     while (true) {
-        const sockFile = path.join(currentDir, '.vscode', 'unified-lsp.sockpath');
-        if (fs.existsSync(sockFile)) {
-            return fs.readFileSync(sockFile, 'utf8').trim();
+        const currentSockFile = path.join(currentDir, '.vscode', 'one-lsp.sockpath');
+        if (fs.existsSync(currentSockFile)) {
+            return fs.readFileSync(currentSockFile, 'utf8').trim();
         }
         const parentDir = path.dirname(currentDir);
         if (parentDir === currentDir) break; // reached root
@@ -33,11 +32,11 @@ function findSocket() {
 const socketPath = findSocket();
 
 if (!socketPath) {
-    console.error('ERROR: Could not find Unified LSP socket path.');
-    console.error('Ensure you are running this within a VS Code workspace where the Unified LSP extension is active,');
+    console.error('ERROR: Could not find one-lsp socket path.');
+    console.error('Ensure you are running this within a VS Code workspace where the one-lsp extension is active,');
     console.error('or specify the socket manually via:');
     console.error('  --socket=/path/to/sock');
-    console.error('  UNIFIED_LSP_SOCKET=/path/to/sock environment variable.');
+    console.error('  ONE_LSP_SOCKET=/path/to/sock environment variable.');
     process.exit(1);
 }
 
@@ -48,6 +47,6 @@ const client = net.createConnection(socketPath, () => {
 });
 
 client.on('error', (err) => {
-    console.error(`Failed to connect to VS Code Proxy at ${socketPath}: ${err.message}`);
+    console.error(`Failed to connect to one-lsp unified proxy at ${socketPath}: ${err.message}`);
     process.exit(1);
 });

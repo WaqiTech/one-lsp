@@ -90,7 +90,7 @@ export function registerLifecycleHandlers(connection: ProtocolConnection) {
 					typeHierarchyProvider: true,
 				},
 				serverInfo: {
-					name: "unified-lsp-proxy",
+					name: "one-lsp",
 					version: "0.0.1",
 				},
 			}

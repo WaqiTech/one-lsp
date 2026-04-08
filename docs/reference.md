@@ -1,6 +1,6 @@
-# **Unified LSP Proxy: Technical Implementation Reference**
+# **one-lsp: Technical Implementation Reference**
 
-This document details the engineering choices, problem-solving strategies, and edge-case mitigations required to build a robust LSP-to-VS-Code proxy.
+This document details the engineering choices, problem-solving strategies, and edge-case mitigations required to build `one-lsp`, a robust unified LSP-to-VS-Code proxy.
 
 ## **1. Transport & Framing Architecture**
 
@@ -12,7 +12,7 @@ External LSP clients typically expect to spawn a child process and communicate v
 
 We decouple the transport layer using Inter-Process Communication (IPC) sockets. This provides low-latency, file-system-secured streaming.
 
-1. **VS Code Extension (Server):** Uses the Node.js `net` module to create a server listening on a Unix Domain Socket (`/tmp/unified-lsp.sock`) on Linux/macOS, or a Named Pipe (`\\.\pipe\unified-lsp`) on Windows.  
+1. **VS Code Extension (Server):** Uses the Node.js `net` module to create a server listening on a Unix Domain Socket (`/tmp/one-lsp.sock`) on Linux/macOS, or a Named Pipe (`\\.\pipe\one-lsp`) on Windows.  
 2. **Bridge Script (Client-Side Proxy):** A tiny external script connects to this socket file and pipes `process.stdin` to the socket, and the socket to `process.stdout`.
 
 ### **Framing Implementation Detail**
@@ -35,8 +35,8 @@ import * as rpc from 'vscode-jsonrpc/node';
 function generateSocketPath(): string {
     const id = crypto.randomBytes(16).toString("hex");
     return os.platform() === 'win32'   
-        ? `\\\\.\\pipe\\unified-lsp-${id}`   
-        : path.join(os.tmpdir(), `unified-lsp-${id}.sock`);
+        ? `\\\\.\\pipe\\one-lsp-${id}`   
+        : path.join(os.tmpdir(), `one-lsp-${id}.sock`);
 }
 
 const socketPath = generateSocketPath();
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Write socket path to workspace for automatic discovery by bridge.js
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
-        const sockInfoPath = path.join(workspaceFolders[0].uri.fsPath, ".vscode", "unified-lsp.sockpath");
+        const sockInfoPath = path.join(workspaceFolders[0].uri.fsPath, ".vscode", "one-lsp.sockpath");
         fs.mkdirSync(path.dirname(sockInfoPath), { recursive: true });
         fs.writeFileSync(sockInfoPath, socketPath, "utf8");
     }
@@ -82,11 +82,11 @@ const path = require('path');
 
 // 1. Env Var -> 2. CLI Arg -> 3. Auto-discover from workspace
 function findSocket() {
-    if (process.env.UNIFIED_LSP_SOCKET) return process.env.UNIFIED_LSP_SOCKET;
+    if (process.env.ONE_LSP_SOCKET) return process.env.ONE_LSP_SOCKET;
     
     let currentDir = process.cwd();
     while (true) {
-        const sockFile = path.join(currentDir, '.vscode', 'unified-lsp.sockpath');
+        const sockFile = path.join(currentDir, '.vscode', 'one-lsp.sockpath');
         if (fs.existsSync(sockFile)) return fs.readFileSync(sockFile, 'utf8').trim();
         const parentDir = path.dirname(currentDir);
         if (parentDir === currentDir) break;
@@ -105,7 +105,7 @@ const client = net.createConnection(socketPath, () => {
 
 
 client.on('error', (err) => {  
-    console.error(`Failed to connect to VS Code Proxy: ${err.message}`);  
+    console.error(`Failed to connect to one-lsp unified proxy: ${err.message}`);  
     process.exit(1);  
 });
 ```
