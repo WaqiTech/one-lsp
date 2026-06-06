@@ -1,8 +1,5 @@
 import * as vscode from "vscode"
 import type {
-	CodeAction,
-	CodeActionKind,
-	Command,
 	CompletionItem,
 	DocumentHighlight,
 	DocumentSymbol,
@@ -12,7 +9,6 @@ import type {
 	Range,
 	SymbolInformation,
 	TextEdit,
-	WorkspaceEdit,
 } from "vscode-languageserver-protocol"
 import {
 	CompletionItemKind,
@@ -339,56 +335,6 @@ export function toLspTextEdit(edit: vscode.TextEdit): TextEdit {
 	return {
 		range: toLspRange(edit.range),
 		newText: edit.newText,
-	}
-}
-
-export function toLspWorkspaceEdit(edit: vscode.WorkspaceEdit): WorkspaceEdit {
-	const changes: { [uri: string]: TextEdit[] } = {}
-
-	// Note: VS Code's public API for WorkspaceEdit (`entries()`) only exposes TextEdits.
-	// Any file operations (CreateFile, RenameFile, DeleteFile) embedded in the edit are hidden.
-	// Since accessing internal/undocumented properties (like `_allEntries()`) breaks type safety
-	// and stability, we intentionally only support text changes here.
-	for (const [uri, textEdits] of edit.entries()) {
-		changes[uri.toString()] = textEdits.map(toLspTextEdit)
-	}
-
-	return { changes }
-}
-
-export function toLspCodeAction(
-	action: vscode.CodeAction | vscode.Command,
-): CodeAction | Command {
-	if (
-		"command" in action &&
-		typeof action.command === "string" &&
-		!("edit" in action)
-	) {
-		// It's a Command
-		const cmd = action as vscode.Command
-		return {
-			title: cmd.title,
-			command: cmd.command,
-			arguments: cmd.arguments,
-		}
-	}
-
-	const codeAction = action as vscode.CodeAction
-	return {
-		title: codeAction.title,
-		kind: codeAction.kind?.value as CodeActionKind,
-		diagnostics: codeAction.diagnostics?.map((d) => ({
-			range: toLspRange(d.range),
-			message: d.message,
-		})),
-		edit: codeAction.edit ? toLspWorkspaceEdit(codeAction.edit) : undefined,
-		command: codeAction.command
-			? {
-					title: codeAction.command.title,
-					command: codeAction.command.command,
-					arguments: codeAction.command.arguments,
-				}
-			: undefined,
 	}
 }
 

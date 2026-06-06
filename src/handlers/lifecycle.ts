@@ -6,7 +6,6 @@ import {
 	type InitializeResult,
 	type ProtocolConnection,
 	ShutdownRequest,
-	TextDocumentSyncKind,
 } from "vscode-languageserver-protocol"
 
 export function registerLifecycleHandlers(connection: ProtocolConnection) {
@@ -22,7 +21,6 @@ export function registerLifecycleHandlers(connection: ProtocolConnection) {
 
 			return {
 				capabilities: {
-					textDocumentSync: TextDocumentSyncKind.Incremental,
 					completionProvider: {
 						resolveProvider: false,
 						triggerCharacters: [".", ":", ">", "/", '"', "'"],
@@ -32,8 +30,6 @@ export function registerLifecycleHandlers(connection: ProtocolConnection) {
 					referencesProvider: true,
 					documentSymbolProvider: true,
 					workspaceSymbolProvider: true,
-					codeActionProvider: true,
-					renameProvider: true,
 					documentFormattingProvider: true,
 					documentRangeFormattingProvider: true,
 					documentOnTypeFormattingProvider: { firstTriggerCharacter: ";" },

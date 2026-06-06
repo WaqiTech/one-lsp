@@ -8,7 +8,6 @@ import * as rpc from "vscode-jsonrpc/node"
 import { createProtocolConnection } from "vscode-languageserver-protocol/node"
 import { registerAdvancedUIHandlers } from "./handlers/advancedUI"
 import { registerCodeModificationHandlers } from "./handlers/codeModification"
-import { registerDocumentSyncHandlers } from "./handlers/documentSync"
 import { registerHierarchyHandlers } from "./handlers/hierarchy"
 import { registerLifecycleHandlers } from "./handlers/lifecycle"
 import { registerNavigationHandlers } from "./handlers/navigation"
@@ -45,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
 		outputChannel.appendLine(`Wrote socket path to workspace: ${sockInfoPath}`)
 
 		if (os.platform() !== "win32") {
-			executablePath = path.join(workspaceRoot, "one-lsp")
+			executablePath = path.join(dotVscode, "one-lsp")
 			const scriptContent = `#!/bin/sh\nexec nc -U "${socketPath}"\n`
 			fs.writeFileSync(executablePath, scriptContent, { mode: 0o755 })
 			outputChannel.appendLine(
@@ -68,7 +67,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 		// Map handlers here...
 		registerLifecycleHandlers(connection)
-		registerDocumentSyncHandlers(connection)
 		registerNavigationHandlers(connection)
 		registerCodeModificationHandlers(connection)
 		registerAdvancedUIHandlers(connection)

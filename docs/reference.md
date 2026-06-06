@@ -116,9 +116,9 @@ client.on('error', (err) => {
 
 When the LSP client connects, it sends an `initialize` request. If the proxy does not respond with exact `ServerCapabilities`, the client will not send subsequent requests (like hover or completions).
 
-### **Solution: Hardcoded Aggregated Capabilities**
+### **Solution: Minimal Public-API Capabilities**
 
-Because VS Code dynamically routes requests to underlying providers, our proxy technically supports *everything* VS Code supports. We must return a comprehensive `ServerCapabilities` object.
+Because `one-lsp` is a thin proxy over VS Code state, it only advertises LSP features that can be implemented directly and faithfully through VS Code's public extension API. Features that require hidden VS Code state, lossy `WorkspaceEdit` conversion, or a per-client document mirror are intentionally omitted.
 
 **Implementation Specification for `initialize` response:**
 
@@ -126,7 +126,6 @@ Because VS Code dynamically routes requests to underlying providers, our proxy t
 connection.onRequest(InitializeRequest.type, (params: InitializeParams): InitializeResult => {  
     return {  
         capabilities: {  
-            textDocumentSync: TextDocumentSyncKind.Incremental,  
             completionProvider: {  
                 resolveProvider: false,  
                 triggerCharacters: ['.', ':', '>', '/', '"', "'"]  
@@ -136,8 +135,6 @@ connection.onRequest(InitializeRequest.type, (params: InitializeParams): Initial
             referencesProvider: true,  
             documentSymbolProvider: true,  
             workspaceSymbolProvider: true,  
-            codeActionProvider: true,  
-            renameProvider: true,  
             documentFormattingProvider: true  
         }  
     };  
@@ -170,40 +167,15 @@ connection.onRequest(HoverRequest.type, async (params, token) => {
 });
 ```
 
-## **4. State Synchronization Strategies**
+## **4. State Model**
 
-### **Problem: Document Desync**
+### **Problem: Avoiding Shadow State**
 
-The underlying VS Code LSPs (like `tsserver` or `pylsp`) read from VS Code's internal text buffer, not from the file system. If the LSP client makes an internal edit and asks for autocomplete without telling VS Code, the offsets will be wrong, and the completion will fail.
+The underlying VS Code providers read from VS Code's current document state. Mirroring an external editor's unsaved buffer into VS Code would require mutating live documents, managing versions, serializing changes per URI, and preserving user undo/save semantics. That is too much state for a minimal proxy and can corrupt the editor if it desynchronizes.
 
-### **Solution: WorkspaceEdit Shadowing**
+### **Solution: VS Code State Only**
 
-When the client sends `textDocument/didChange`, we must physically alter the VS Code editor's state without saving the file (leaving it "dirty").
-
-**Edge Case Mitigation: Version Tracking**
-
-LSP `didChange` events include version numbers. VS Code documents also have version numbers. You must ensure you process `didChange` events in sequential order, or you will corrupt VS Code's buffer.
-
-```typescript
-connection.onNotification(DidChangeTextDocumentNotification.type, async (params) => {  
-    const uri = vscode.Uri.parse(params.textDocument.uri);  
-    const edit = new vscode.WorkspaceEdit();  
-      
-    // LSP allows batch incremental changes in a single notification  
-    for (const change of params.contentChanges) {  
-        if (TextDocumentContentChangeEvent.isIncremental(change)) {  
-            const range = toVsCodeRange(change.range);  
-            edit.replace(uri, range, change.text);  
-        } else {  
-            // Full document sync fallback  
-            const doc = await vscode.workspace.openTextDocument(uri);  
-            const fullRange = new vscode.Range(0, 0, doc.lineCount, 0);  
-            edit.replace(uri, fullRange, change.text);  
-        }  
-    }  
-    await vscode.workspace.applyEdit(edit);  
-});
-```
+`one-lsp` does not advertise text document synchronization and does not handle `textDocument/didChange`, `textDocument/didSave`, or related notifications. Requests are answered against whatever state VS Code currently has for the target URI. If an external editor has unsaved changes that VS Code does not know about, requests may reflect VS Code's older state; the fix is to update VS Code's document state outside of `one-lsp`, not to maintain a second buffer inside the proxy.
 
 ## **5. Aggregation & Data Translation Details**
 
@@ -247,8 +219,8 @@ function toLspCompletionItemKind(vsKind: vscode.CompletionItemKind): lsp.Complet
 
 ### **Problem 4: File Operations in WorkspaceEdit**
 
-* **Issue:** When a VS Code extension returns a `WorkspaceEdit` (e.g., for a rename or code action), that edit might contain file creations, renames, or deletions in addition to text edits. However, VS Code's public extension API only exposes text edits via the `edit.entries()` method and completely hides these file operations.
-* **Solution/Limitation:** Because there is no stable public API to extract `CreateFile`, `RenameFile`, or `DeleteFile` operations from a `vscode.WorkspaceEdit` without resorting to undocumented internal properties (like `_allEntries()`), `one-lsp` intentionally limits support to text modifications. Any file operations included in an edit are currently dropped to ensure the proxy's long-term stability and type safety.
+* **Issue:** When a VS Code extension returns a `WorkspaceEdit` (e.g., for a rename or code action), that edit might contain file creations, renames, or deletions in addition to text edits. However, VS Code's public extension API only exposes text edits via the `edit.entries()` method and hides these file operations.
+* **Solution/Limitation:** `one-lsp` does not advertise rename or code-action support. Returning partial edits would be incorrect, and reading undocumented internal properties would make the proxy depend on unsupported VS Code internals.
 
 ## **6. Diagnostic Streaming (Push Notifications)**
 

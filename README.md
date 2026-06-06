@@ -6,7 +6,7 @@
 
 ## Features
 
-The proxy aggregates completions, hovers, diagnostics, definitions, and code actions from all active Visual Studio Code extensions and streams them directly to your connected external editor.
+The proxy exposes selected language features from VS Code's current editor state, including completions, hovers, diagnostics, definitions, symbols, and formatting. Features that cannot be implemented faithfully through VS Code's public extension API, such as rename and code actions with file operations, are intentionally not advertised.
 
 ## Installation
 
